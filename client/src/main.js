@@ -3,6 +3,7 @@ import BootstrapVue from 'bootstrap-vue';
 import Vue from 'vue';
 import App from './App.vue';
 import router from './router';
+import 'leaflet/dist/leaflet.css'
 
 Vue.use(BootstrapVue);
 
