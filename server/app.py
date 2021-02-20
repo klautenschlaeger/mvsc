@@ -2,6 +2,8 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import json
+import serialcommunicator as SeriCommi
+import preparerLoRaMessage
 
 from flask_serial import Serial
 import struct
@@ -20,9 +22,6 @@ OWN_POLYS = []
 share_poly = []
 share_poly_ids = []
 scheduler = APScheduler()
-
-REV_POLYS = []
-GROUP = [1]
 
 MACHINES = []
 MACHINE = {}
@@ -44,27 +43,19 @@ app.config['SERIAL_STOPBITS'] = 1
 # enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
 polygon_id = 1
-driver_id = 1
+
 time_slot = 1
 
 driver_id = 3
 GROUP = [1, 2]
-
-
-async def hello():
-    uri = "ws://localhost:8765"
-    async with websockets.connect(uri) as websocket:
-        await websocket.send(struct.pack("i",100))
-        #await websocket.recv()
-
-
-
+serialCommunicator = SeriCommi(driver_id)
+preparerLoRa = preparerLoRaMessage(driver_id, GROUP)
 
 
 # sanity check route
 @app.route('/ping', methods=['GET'])
 def ping_pong():
-    #asyncio.run(hello())
+    # asyncio.run(hello())
     return jsonify('pong!')
 
 
@@ -213,36 +204,6 @@ def update_own_polys(poly):
     polygon_id = polygon_id + 1
 
 
-def convert_poly_format(id, p_id, coords):
-    global driver_id
-    driver = id % 100
-    polygon = []
-    for e in coords:
-        polygon.append(e / 10000000)
-    coords = []
-    for i in range(0, polygon.__len__(), 2):
-        coordinate = []
-        coordinate.append(float("{:.7f}".format(polygon[i])))
-        coordinate.append(float("{:.7f}".format(polygon[i + 1])))
-        coords.append(coordinate)
-    if id == driver_id:
-        update_own_polys(poly=polygon)
-    structure = {
-        "w_id": p_id,
-        "d_id": driver,
-        "w": polygon
-    }
-    groups = []
-    id = id - driver
-    if int(math.floor(id / 10000)) == 1:
-        groups.append(1)
-    if int(math.floor(id / 1000)) % 10 == 2:
-        groups.append(2)
-    if id % 1000 == 300:
-        groups.append(3)
-    update_other_polys(structure, groups)
-
-
 def update_other_polys(structure, groups):
     same_group = False
     for e in groups:
@@ -257,43 +218,11 @@ def update_other_polys(structure, groups):
 
 # @ser.on_message()
 def handle_message(msg):
-    print("handling message")
-    list1 = []
-    global REV_POLYS
-    for b in struct.iter_unpack('i', msg):
-        list1.append(b[0])
-    number = list1[1] % 10
-    if number == 1:
-        REV_POLYS = []
-    load = int((list1[1] % 100 - number) / 10)
-    if load == number:
-        if load == 1:
-            # single packet
-            id = list1.pop(0)
-            p_id = int((list1.pop(0) - load * 10 - number) / 100)
-            convert_poly_format(id=id, p_id=p_id, coords=list1)
-        else:
-            # multiple packets
-            REV_POLYS.append(list1)
-            id = list1[0]
-            p_id = int((list1[1] - load * 10 - number) / 100)
-            coords = []
-            no_wrong_packet = True
-            for packet in REV_POLYS:
-                rev_pid = int((packet[1] - packet[1] % 100) / 100)
-                if p_id == rev_pid:
-                    list1 = packet
-                    list1.pop(0)
-                    list1.pop(0)
-                    coords = coords + list1
-                else:
-                    REV_POLYS = []
-                    no_wrong_packet = False
-                    break
-            if no_wrong_packet:
-                convert_poly_format(id=id, p_id=p_id, coords=coords)
-    else:
-        REV_POLYS.append(list1)
+    serialCommunicator.handleMessage(msg)
+    if len(serialCommunicator.available_structs) > 0:
+        for element in serialCommunicator.available_structs:
+            update_other_polys(element[0], element[1])
+        serialCommunicator.available_structs = []
 
 
 if __name__ == '__main__':
