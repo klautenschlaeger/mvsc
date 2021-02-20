@@ -299,4 +299,4 @@ def handle_message(msg):
 if __name__ == '__main__':
     scheduler.init_app(app)
     scheduler.start()
-    app.run(host="localhost", port=5005, debug=True, use_reloader=False)
+    app.run(host="localhost", port=5010, debug=True, use_reloader=False)
