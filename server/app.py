@@ -2,14 +2,14 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import json
-from flask_socketio import SocketIO
+
 from flask_serial import Serial
 import struct
 import math
 from flask_apscheduler import APScheduler
-from datetime import datetime
-import threading
-import time
+
+import asyncio
+import websockets
 
 POLYS = [[],
          [],
@@ -37,49 +37,34 @@ app.config['SERIAL_BAUDRATE'] = 115200
 app.config['SERIAL_BYTESIZE'] = 8
 app.config['SERIAL_PARITY'] = 'N'
 app.config['SERIAL_STOPBITS'] = 1
-app.config['CELERY_BROKER_URL'] = 'redis://localhost:6379/0'
-app.config['CELERY_RESULT_BACKEND'] = 'redis://localhost:6379/0'
 
 # ser = Serial(app)
 
-async_mode = None
-socket_ = SocketIO(app, async_mode=async_mode, cors_allowed_origins='http://localhost:63342')
 
 # enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
 polygon_id = 1
 driver_id = 1
 time_slot = 1
-"""
+
 driver_id = 3
 GROUP = [1, 2]
-"""
+
+
+async def hello():
+    uri = "ws://localhost:8765"
+    async with websockets.connect(uri) as websocket:
+        await websocket.send(struct.pack("i",100))
+        #await websocket.recv()
+
+
+
 
 
 # sanity check route
 @app.route('/ping', methods=['GET'])
 def ping_pong():
-    print("ser/ ping")
-    list1 = [12309, 2021]
-    for i in range(0, 60, 1):
-        list1.append(-123456789)
-    buf = struct.pack('%si' % len(list1), *list1)
-    handle_message(buf)
-    list1 = [12309, 2022]
-    for i in range(0, 30, 1):
-        list1.append(-123456789)
-    buf = struct.pack('%si' % len(list1), *list1)
-    handle_message(buf)
-    list1 = [12309, 2111]
-    for i in range(0, 40, 1):
-        list1.append(-123456789)
-    buf = struct.pack('%si' % len(list1), *list1)
-    handle_message(buf)
-    list1 = [12309, 2211]
-    for i in range(0, 30, 1):
-        list1.append(-123456789)
-    buf = struct.pack('%si' % len(list1), *list1)
-    handle_message(buf)
+    #asyncio.run(hello())
     return jsonify('pong!')
 
 
@@ -146,7 +131,7 @@ def all_polys():
 
 # communication with server
 def send_poly_to_central(post_data):
-    response = requests.post('http://localhost:5001//mv/update', json=post_data)
+    response = requests.post('http://localhost:5001/mv/update', json=post_data)
     response_data = json.loads(response.text)
     print('needed:')
     print(response_data.get('needed'))
@@ -159,7 +144,6 @@ def share_polygon_via_LoRa():
     global share_poly
     global share_poly_ids
     print("sharing ")
-    now = datetime.now()
     id = driver_id
     if 1 in GROUP:
         id = id + 10000
@@ -171,25 +155,42 @@ def share_polygon_via_LoRa():
     for p in share_poly:
         poly = share_poly.pop(element)
         print(poly)
+        poly_int = []
+        for coord in poly:
+            for coordinate in coord:
+                poly_int.append(int(coordinate * 10000000))
+        print(poly_int)
         p_id = share_poly_ids.pop(element)
         print(p_id)
         element = element + 1
-        loads = math.ceil(len(poly) / 60)
-        print(loads)
+        loads = math.ceil(len(poly_int) / 60)
+        print("loads: " + str(loads))
+        print("poly_int_len: " + str(poly_int.__len__()))
         poly_id = p_id * 100 + loads * 10
         for i in range(1, loads + 1, 1):
             list_lora_int = [id, poly_id + i]
             n = (i - 1) * 60
-            m = i * 60 - 1
+            m = i * 60
             print(m)
             print(n)
-            if poly.__len__() - 1 < m:
-                m = poly.__len__() - 1
-            list_lora_int = list_lora_int + poly[n:m]
+            if poly_int.__len__() - 1 < m:
+                m = poly_int.__len__()
+            print(m)
+            list_lora_int = list_lora_int + poly_int[n:m]
             buf = struct.pack('%si' % len(list_lora_int), *list_lora_int)
             print(list_lora_int)
+            print("lora_int_len: " + str(list_lora_int.__len__()))
             print(buf)
             # ser.on_send(buf)
+
+
+@app.route('/update/own', methods=['POST'])
+def get_poly_from_QT():
+    response_object = {'status': 'success'}
+    post_data = request.get_json()
+    polygon = post_data.get('area')
+    update_own_polys(polygon)
+    return response_object
 
 
 def update_own_polys(poly):
@@ -212,17 +213,20 @@ def update_own_polys(poly):
     polygon_id = polygon_id + 1
 
 
-@socket_.on('connect')
-def test_connect():
-    socket_.emit('response', {'data': 'Connected'})
-
-
-# @ser.on_message()
 def convert_poly_format(id, p_id, coords):
+    global driver_id
     driver = id % 100
     polygon = []
     for e in coords:
-        polygon.append(e/10000000)
+        polygon.append(e / 10000000)
+    coords = []
+    for i in range(0, polygon.__len__(), 2):
+        coordinate = []
+        coordinate.append(float("{:.7f}".format(polygon[i])))
+        coordinate.append(float("{:.7f}".format(polygon[i + 1])))
+        coords.append(coordinate)
+    if id == driver_id:
+        update_own_polys(poly=polygon)
     structure = {
         "w_id": p_id,
         "d_id": driver,
@@ -251,6 +255,7 @@ def update_other_polys(structure, groups):
                 POLYS[e - 1].append(structure)
 
 
+# @ser.on_message()
 def handle_message(msg):
     print("handling message")
     list1 = []
@@ -263,10 +268,12 @@ def handle_message(msg):
     load = int((list1[1] % 100 - number) / 10)
     if load == number:
         if load == 1:
+            # single packet
             id = list1.pop(0)
             p_id = int((list1.pop(0) - load * 10 - number) / 100)
             convert_poly_format(id=id, p_id=p_id, coords=list1)
         else:
+            # multiple packets
             REV_POLYS.append(list1)
             id = list1[0]
             p_id = int((list1[1] - load * 10 - number) / 100)
@@ -292,4 +299,4 @@ def handle_message(msg):
 if __name__ == '__main__':
     scheduler.init_app(app)
     scheduler.start()
-    socket_.run(app=app, host="localhost", port=5005, debug=True, use_reloader=False)
+    app.run(host="localhost", port=5005, debug=True, use_reloader=False)
