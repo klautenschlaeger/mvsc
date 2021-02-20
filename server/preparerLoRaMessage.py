@@ -19,7 +19,7 @@ class PrepareLoraMessage(object):
         self.share_poly = []
         self.share_poly_ids = []
 
-    def prepareBinaryMessage(self, msg):
+    def prepareBinaryMessages(self, msg):
         id = self.driverId
         if self.driverId > 0:
             print("sharing ")
@@ -30,6 +30,7 @@ class PrepareLoraMessage(object):
             if 3 in self.groups:
                 id = id + 300
             element = 0
+            buffer = []
             for p in self.share_poly:
                 poly = self.share_poly.pop(element)
                 poly_int = []
@@ -53,7 +54,8 @@ class PrepareLoraMessage(object):
                     # print(m)
                     list_lora_int = list_lora_int + poly_int[n:m]
                     buf = struct.pack('%si' % len(list_lora_int), *list_lora_int)
-                    return buf
+                    buffer.append(buf)
+            return buffer
                     # print(list_lora_int)
                     # print("lora_int_len: " + str(list_lora_int.__len__()))
                     # print(buf)

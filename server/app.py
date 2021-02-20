@@ -2,7 +2,7 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
 import json
-import serialcommunicator as SeriCommi
+import serialcommunicator
 import preparerLoRaMessage
 
 from flask_serial import Serial
@@ -48,14 +48,13 @@ time_slot = 1
 
 driver_id = 3
 GROUP = [1, 2]
-serialCommunicator = SeriCommi(driver_id)
-preparerLoRa = preparerLoRaMessage(driver_id, GROUP)
+serialCommunicator = serialcommunicator.SerialCommunicator(driver_id)
+preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(driver_id, GROUP)
 
 
 # sanity check route
 @app.route('/ping', methods=['GET'])
 def ping_pong():
-    # asyncio.run(hello())
     return jsonify('pong!')
 
 
@@ -85,8 +84,9 @@ def all_machines():
             GROUP.append(2)
         if post_data.get('three'):
             GROUP.append(3)
-        print(driver_id)
-        print(MACHINE)
+        preparerLoRa.groups = GROUP
+        preparerLoRa.driverId = driver_id
+        serialCommunicator.driverId = driver_id
         MACHINES = response_data.get('machines')
         response_object['message'] = 'Machine added!'
     else:
@@ -131,48 +131,9 @@ def send_poly_to_central(post_data):
 
 @scheduler.task('interval', id='do_job_1', seconds=10, start_date='2021-02-14 10:30:01')
 def share_polygon_via_LoRa():
-    global driver_id
-    global share_poly
-    global share_poly_ids
-    print("sharing ")
-    id = driver_id
-    if 1 in GROUP:
-        id = id + 10000
-    if 2 in GROUP:
-        id = id + 2000
-    if 3 in GROUP:
-        id = id + 300
-    element = 0
-    for p in share_poly:
-        poly = share_poly.pop(element)
-        print(poly)
-        poly_int = []
-        for coord in poly:
-            for coordinate in coord:
-                poly_int.append(int(coordinate * 10000000))
-        print(poly_int)
-        p_id = share_poly_ids.pop(element)
-        print(p_id)
-        element = element + 1
-        loads = math.ceil(len(poly_int) / 60)
-        print("loads: " + str(loads))
-        print("poly_int_len: " + str(poly_int.__len__()))
-        poly_id = p_id * 100 + loads * 10
-        for i in range(1, loads + 1, 1):
-            list_lora_int = [id, poly_id + i]
-            n = (i - 1) * 60
-            m = i * 60
-            print(m)
-            print(n)
-            if poly_int.__len__() - 1 < m:
-                m = poly_int.__len__()
-            print(m)
-            list_lora_int = list_lora_int + poly_int[n:m]
-            buf = struct.pack('%si' % len(list_lora_int), *list_lora_int)
-            print(list_lora_int)
-            print("lora_int_len: " + str(list_lora_int.__len__()))
-            print(buf)
-            # ser.on_send(buf)
+    for msg in preparerLoRa.prepareBinaryMessages():
+        print(msg)
+        # ser.on_send(buf)
 
 
 @app.route('/update/own', methods=['POST'])
@@ -190,6 +151,7 @@ def update_own_polys(poly):
     global GROUP
     global share_poly
     global share_poly_ids
+    global preparerLoRa
     # first case: self-produced poly
     structure = {
         "w_id": polygon_id,
@@ -199,8 +161,7 @@ def update_own_polys(poly):
     polygon_for_server = {'driverid': driver_id, 'workareaid': polygon_id, 'area': poly, 'groups': GROUP}
     # send_poly_to_central(polygon_for_server)
     OWN_POLYS.append(structure)
-    share_poly.append(poly)
-    share_poly_ids.append(polygon_id)
+    preparerLoRa.addNewPoly(poly=poly, p_id=polygon_id)
     polygon_id = polygon_id + 1
 
 
@@ -214,6 +175,7 @@ def update_other_polys(structure, groups):
         for e in groups:
             if e in GROUP:
                 POLYS[e - 1].append(structure)
+        serialCommunicator.sendMessage(structure.get("w"))
 
 
 # @ser.on_message()
