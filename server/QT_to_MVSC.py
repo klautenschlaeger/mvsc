@@ -42,7 +42,7 @@ async def hello(websocket, path):
             field = {'area': coords2}
             x = requests.post(url, json=field)
             for msg in waiting:
-                await we bsocket.send(msg)
+                await websocket.send(msg)
 
 
 start_server = websockets.serve(hello, "localhost", 8765)
