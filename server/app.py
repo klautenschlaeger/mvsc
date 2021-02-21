@@ -30,7 +30,7 @@ DEBUG = False
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['SERIAL_TIMEOUT'] = 0.2
-app.config['SERIAL_PORT'] = '/dev/ttyUSB0'
+app.config['SERIAL_PORT'] = '/dev/ttyUSB1'
 app.config['SERIAL_BAUDRATE'] = 115200
 app.config['SERIAL_BYTESIZE'] = 8
 app.config['SERIAL_PARITY'] = 'N'
@@ -44,10 +44,10 @@ polygon_id = 1
 
 time_slot = 1
 
-driver_id = 3
+driver_id = 2
 GROUP = [1, 2]
 serialCommunicator = serialcommunicator.SerialCommunicator(driver_id)
-preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(2, GROUP)
+preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(driverId=driver_id, groups=GROUP)
 
 
 # sanity check route
@@ -103,6 +103,7 @@ def all_polys():
     response_object = {'status': 'success'}
     post_data = request.get_json()
     counters = post_data.get('counters')
+    print(counters)
     for i in range(0, 3, 1):
         coordinates = []
         if POLYS[i].__len__() > 0:
@@ -171,6 +172,8 @@ def update_own_polys(poly):
 
 
 def update_other_polys(structure, groups):
+    print(structure)
+    print(groups)
     same_group = False
     for e in groups:
         if e in GROUP:
@@ -188,11 +191,12 @@ def handle_message(msg):
     serialCommunicator.handleMessage(msg)
     if len(serialCommunicator.available_structs) > 0:
         for element in serialCommunicator.available_structs:
-            update_other_polys(element[0], element[1])
+            ele = serialCommunicator.available_structs.pop(0)
+            update_other_polys(ele[0], ele[1])
         serialCommunicator.available_structs = []
 
 
 if __name__ == '__main__':
     scheduler.init_app(app)
     scheduler.start()
-    app.run(host="localhost", port=5010, debug=True, use_reloader=False)
+    app.run(host="localhost", port=5005, debug=True, use_reloader=False)
