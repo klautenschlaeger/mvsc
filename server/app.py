@@ -6,6 +6,7 @@ import requests
 import json
 import serialcommunicator
 import preparerLoRaMessage
+import asyncio
 
 from flask_serial import Serial
 
@@ -46,13 +47,18 @@ time_slot = 1
 driver_id = 3
 GROUP = [1, 2]
 serialCommunicator = serialcommunicator.SerialCommunicator(driver_id)
-preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(driver_id, GROUP)
+preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(2, GROUP)
 
 
 # sanity check route
 @app.route('/ping', methods=['GET'])
 def ping_pong():
-    update_own_polys(poly=[[51.722475, 12.119768], [51.72247, 12.119726], [51.722479, 12.119723], [51.722483, 12.119763], [51.722475, 12.119768]])
+    poly = []
+    for i in range(0, 70, 1):
+        poly.append([51.722475, 12.119768])
+    update_own_polys(poly=poly)
+    for msg in preparerLoRa.prepareBinaryMessages():
+        handle_message(msg)
     return jsonify('pong!')
 
 
@@ -174,7 +180,7 @@ def update_other_polys(structure, groups):
         for e in groups:
             if e in GROUP:
                 POLYS[e - 1].append(structure)
-        serialCommunicator.sendMessage(structure.get("w"))
+        asyncio.run(serialCommunicator.sendMessage(structure.get("w")))
 
 
 @ser.on_message()

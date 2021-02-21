@@ -77,17 +77,20 @@ class SerialCommunicator(object):
         id = id - driver
         id_group = int(math.floor(id / 10000))
         if id_group == 1 or id_group == 0:
-            groups.append(1)
+            if id_group == 1:
+                groups.append(1)
         else:
             return None
         id_group = int(math.floor(id / 1000)) % 10
         if id_group == 2 or id_group == 0:
-            groups.append(2)
+            if id_group == 2:
+                groups.append(2)
         else:
             return None
         id_group = int((id % 1000) / 100)
         if id_group == 3 or id_group == 0:
-            groups.append(3)
+            if id_group == 3:
+                groups.append(3)
         else:
             return None
         self.available_structs.append((structure, groups))

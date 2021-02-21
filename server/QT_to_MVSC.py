@@ -22,6 +22,7 @@ async def hello(websocket, path):
         message[0] = 1
         message_bytes = bytes(message)
         waiting.append(message_bytes)
+        print(len(waiting))
     else:
         preheader = 0
         for a in range(0, count_poly[0], 1):
