@@ -184,7 +184,7 @@ export default {
   },
   methods: {
     pollpolys() {
-      const path = 'http://localhost:5005/mv/poly';
+      const path = 'http://localhost:5010/mv/poly';
       const payload = {
         counters: this.counter,
       };
@@ -206,7 +206,7 @@ export default {
       this.polling_machines = setInterval(() => { this.getMachines(); }, 30000);
     },
     getMachines() {
-      const path = 'http://localhost:5005/mv';
+      const path = 'http://localhost:5010/mv';
       axios.get(path)
         .then((res) => {
           this.machines = res.data.machines;
@@ -220,7 +220,7 @@ export default {
       }
     },
     addMachine(payload) {
-      const path = 'http://localhost:5005/mv';
+      const path = 'http://localhost:5010/mv';
       axios.post(path, payload)
         .then(() => {
           this.getMachines();

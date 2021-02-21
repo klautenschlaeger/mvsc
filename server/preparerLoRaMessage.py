@@ -10,19 +10,21 @@ class PrepareLoraMessage(object):
         self.share_poly_ids = []
 
     def addNewPoly(self, poly, p_id):
-        if poly.__len__() > 0:
-            self.share_poly.append(poly)
-        if type(p_id) == int:
-            self.share_poly_ids.append(p_id)
+        poly_int = []
+        for coord in poly:
+            for coordinate in coord:
+                poly_int.append(int(coordinate * 10000000.0))
+        self.share_poly.append(poly_int)
+        self.share_poly_ids.append(p_id)
 
     def reset_share_mem(self):
         self.share_poly = []
         self.share_poly_ids = []
 
-    def prepareBinaryMessages(self, msg):
+    def prepareBinaryMessages(self):
         id = self.driverId
         if self.driverId > 0:
-            print("sharing ")
+            print("sharing")
             if 1 in self.groups:
                 id = id + 10000
             if 2 in self.groups:
@@ -32,11 +34,7 @@ class PrepareLoraMessage(object):
             element = 0
             buffer = []
             for p in self.share_poly:
-                poly = self.share_poly.pop(element)
-                poly_int = []
-                for coord in self.poly:
-                    for coordinate in coord:
-                        poly_int.append(int(coordinate * 10000000))
+                poly_int = self.share_poly.pop(element)
                 p_id = self.share_poly_ids.pop(element)
                 element = element + 1
                 loads = math.ceil(len(poly_int) / 60)
@@ -45,6 +43,7 @@ class PrepareLoraMessage(object):
                 poly_id = p_id * 100 + loads * 10
                 for i in range(1, loads + 1, 1):
                     list_lora_int = [id, poly_id + i]
+                    print("sharing: {0}".format(poly_id +i))
                     n = (i - 1) * 60
                     m = i * 60
                     # print(m)

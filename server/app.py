@@ -1,3 +1,5 @@
+import time
+
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
@@ -6,12 +8,8 @@ import serialcommunicator
 import preparerLoRaMessage
 
 from flask_serial import Serial
-import struct
-import math
-from flask_apscheduler import APScheduler
 
-import asyncio
-import websockets
+from flask_apscheduler import APScheduler
 
 POLYS = [[],
          [],
@@ -37,8 +35,7 @@ app.config['SERIAL_BYTESIZE'] = 8
 app.config['SERIAL_PARITY'] = 'N'
 app.config['SERIAL_STOPBITS'] = 1
 
-# ser = Serial(app)
-
+ser = Serial(app)
 
 # enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
@@ -55,6 +52,7 @@ preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(driver_id, GROUP)
 # sanity check route
 @app.route('/ping', methods=['GET'])
 def ping_pong():
+    update_own_polys(poly=[[51.722475, 12.119768], [51.72247, 12.119726], [51.722479, 12.119723], [51.722483, 12.119763], [51.722475, 12.119768]])
     return jsonify('pong!')
 
 
@@ -133,7 +131,8 @@ def send_poly_to_central(post_data):
 def share_polygon_via_LoRa():
     for msg in preparerLoRa.prepareBinaryMessages():
         print(msg)
-        # ser.on_send(buf)
+        time.sleep(0.100)
+        ser.on_send(msg)
 
 
 @app.route('/update/own', methods=['POST'])
@@ -178,7 +177,7 @@ def update_other_polys(structure, groups):
         serialCommunicator.sendMessage(structure.get("w"))
 
 
-# @ser.on_message()
+@ser.on_message()
 def handle_message(msg):
     serialCommunicator.handleMessage(msg)
     if len(serialCommunicator.available_structs) > 0:
