@@ -93,6 +93,9 @@ class SerialCommunicator(object):
                 groups.append(3)
         else:
             return None
+        print("converting")
+        print(structure)
+        print(groups)
         self.available_structs.append((structure, groups))
 
     async def sendMessage(self, poly):

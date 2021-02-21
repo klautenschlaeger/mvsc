@@ -34,8 +34,8 @@ class PrepareLoraMessage(object):
             element = 0
             buffer = []
             for p in self.share_poly:
-                poly_int = self.share_poly.pop(element)
-                p_id = self.share_poly_ids.pop(element)
+                poly_int = self.share_poly.pop(0)
+                p_id = self.share_poly_ids.pop(0)
                 element = element + 1
                 loads = math.ceil(len(poly_int) / 60)
                 # print("loads: " + str(loads))

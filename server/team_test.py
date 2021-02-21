@@ -18,4 +18,4 @@ for i in range(0, 40, 1):
     # field = {'area': workarea}
     # x = requests.post(url2, json=field)
 
-    time.sleep(10)
+    time.sleep(20)
