@@ -15,6 +15,7 @@ async def hello(websocket, path):
     buffer = await websocket.recv()
     count_poly = struct.unpack_from("i", buffer=buffer, offset=0)
     # foreach poly in vecPoly
+    print("count_poly: {0}".format(count_poly))
     if count_poly[0] == 100:
         message = []
         for byte in buffer:

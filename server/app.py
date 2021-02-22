@@ -134,7 +134,7 @@ def send_poly_to_central(post_data):
     pass
 
 
-@scheduler.task('interval', id='do_job_1', seconds=10, start_date='2021-02-14 10:30:01')
+@scheduler.task('interval', id='do_job_1', seconds=10, start_date='2021-02-14 10:30:05')
 def share_polygon_via_LoRa():
     for msg in preparerLoRa.prepareBinaryMessages():
         print(msg)
