@@ -30,7 +30,7 @@ DEBUG = False
 app = Flask(__name__)
 app.config.from_object(__name__)
 app.config['SERIAL_TIMEOUT'] = 0.2
-app.config['SERIAL_PORT'] = '/dev/ttyUSB1'
+app.config['SERIAL_PORT'] = '/dev/ttyUSB0'
 app.config['SERIAL_BAUDRATE'] = 115200
 app.config['SERIAL_BYTESIZE'] = 8
 app.config['SERIAL_PARITY'] = 'N'
@@ -44,8 +44,8 @@ polygon_id = 1
 
 time_slot = 1
 
-driver_id = 2
-GROUP = [1, 2]
+driver_id = 1
+GROUP = [3]
 serialCommunicator = serialcommunicator.SerialCommunicator(driver_id)
 preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(driverId=driver_id, groups=GROUP)
 
@@ -67,6 +67,7 @@ def ping_pong():
 def all_machines():
     response_object = {'status': 'success'}
     global MACHINES
+    global GROUP
     if request.method == 'POST':
         global driver_id
         post_data = request.get_json()
@@ -82,6 +83,7 @@ def all_machines():
             'two': post_data.get('two'),
             'three': post_data.get('three')
         }
+        GROUP = []
         if post_data.get('one'):
             GROUP.append(1)
         if post_data.get('two'):
@@ -92,8 +94,15 @@ def all_machines():
         preparerLoRa.driverId = driver_id
         serialCommunicator.driverId = driver_id
         MACHINES = response_data.get('machines')
+        print(MACHINES)
         response_object['message'] = 'Machine added!'
     else:
+        post_data = {
+            "group": GROUP
+        }
+        response2 = requests.post('http://localhost:5001/mv', json=post_data)
+        response_data2 = json.loads(response2.text)
+        MACHINES = response_data2.get("machines")
         response_object['machines'] = MACHINES
     return jsonify(response_object)
 
@@ -129,8 +138,11 @@ def all_polys():
 def send_poly_to_central(post_data):
     response = requests.post('http://localhost:5001/mv/update', json=post_data)
     response_data = json.loads(response.text)
+    needed = response_data.get('needed')
     print('needed:')
-    print(response_data.get('needed'))
+    print(needed)
+    if len(needed) > 0:
+        loadNeeded(needed)
     pass
 
 
@@ -165,10 +177,41 @@ def update_own_polys(poly):
         "w": poly
     }
     polygon_for_server = {'driverid': driver_id, 'workareaid': polygon_id, 'area': poly, 'groups': GROUP}
-    # send_poly_to_central(polygon_for_server)
     OWN_POLYS.append(structure)
+    #send_poly_to_central(polygon_for_server)
     preparerLoRa.addNewPoly(poly=poly, p_id=polygon_id)
     polygon_id = polygon_id + 1
+
+
+def loadNeeded(needed):
+    to_request = []
+    global GROUP
+    for identi in needed:
+        d_id = identi % 100
+        p_id = int((identi - d_id) / 100)
+        found = False
+        i = 0
+        while not found and i < 3:
+            for structure in POLYS[i]:
+                if p_id == structure.get("w_id") and d_id == structure.get("d_id"):
+                    found = True
+                    break
+            i = i + 1
+        if not found:
+            to_request.append(identi)
+    post_data = {
+        "needed": to_request
+    }
+    response = requests.post('http://localhost:5001/missing', json=post_data)
+    response_data = json.loads(response.text)
+    rev_polys = response_data.get("needed")
+    for poly in rev_polys:
+        structure = {
+            "w_id": poly.get("w_id"),
+            "d_id": poly.get("d_id"),
+            "w": poly.get("w")
+        }
+        update_other_polys(structure=structure, groups=GROUP)
 
 
 def update_other_polys(structure, groups):
@@ -183,7 +226,7 @@ def update_other_polys(structure, groups):
         for e in groups:
             if e in GROUP:
                 POLYS[e - 1].append(structure)
-        asyncio.run(serialCommunicator.sendMessage(structure.get("w")))
+                asyncio.run(serialCommunicator.sendMessage(structure.get("w")))
 
 
 @ser.on_message()
@@ -199,4 +242,4 @@ def handle_message(msg):
 if __name__ == '__main__':
     scheduler.init_app(app)
     scheduler.start()
-    app.run(host="localhost", port=5005, debug=True, use_reloader=False)
+    app.run(host="localhost", port=5010, debug=False, use_reloader=False, threaded=True)
