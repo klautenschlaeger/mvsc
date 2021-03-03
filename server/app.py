@@ -1,5 +1,5 @@
 import time
-
+import datetime
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import requests
@@ -44,21 +44,15 @@ polygon_id = 1
 
 time_slot = 1
 
+
 driver_id = 1
 GROUP = [3]
 serialCommunicator = serialcommunicator.SerialCommunicator(driver_id)
 preparerLoRa = preparerLoRaMessage.PrepareLoraMessage(driverId=driver_id, groups=GROUP)
 
-
 # sanity check route
 @app.route('/ping', methods=['GET'])
 def ping_pong():
-    poly = []
-    for i in range(0, 70, 1):
-        poly.append([51.722475, 12.119768])
-    update_own_polys(poly=poly)
-    for msg in preparerLoRa.prepareBinaryMessages():
-        handle_message(msg)
     return jsonify('pong!')
 
 
@@ -146,12 +140,47 @@ def send_poly_to_central(post_data):
     pass
 
 
-@scheduler.task('interval', id='do_job_1', seconds=10, start_date='2021-02-14 10:30:05')
+def loadNeeded(needed):
+    to_request = []
+    for identi in needed:
+        d_id = identi % 100
+        p_id = int((identi - d_id) / 100)
+        found = False
+        i = 0
+        while not found and i < 3:
+            for structure in POLYS[i]:
+                if p_id == structure.get("w_id") and d_id == structure.get("d_id"):
+                    found = True
+                    break
+            i = i + 1
+        if not found:
+            to_request.append(identi)
+
+    post_data = {
+        "needed": to_request
+    }
+    response = requests.post('http://localhost:5001/missing', json=post_data)
+    response_data = json.loads(response.text)
+    rev_polys = response_data.get("needed")
+    for poly in rev_polys:
+        structure = {
+            "w_id": poly.get("w_id"),
+            "d_id": poly.get("d_id"),
+            "w": poly.get("w")
+        }
+        update_other_polys(structure=structure, groups=GROUP)
+
+
+@scheduler.task('interval', id='do_job_1', seconds=10, start_date='2021-02-14 10:30:00')
 def share_polygon_via_LoRa():
     for msg in preparerLoRa.prepareBinaryMessages():
+        print("send_message!")
         print(msg)
-        time.sleep(0.100)
+        now = datetime.datetime.now()
+        print("Current date and time : ")
+        print(now.strftime("%Y-%m-%d %H:%M:%S"))
         ser.on_send(msg)
+        time.sleep(0.50)
 
 
 @app.route('/update/own', methods=['POST'])
@@ -170,6 +199,7 @@ def update_own_polys(poly):
     global share_poly
     global share_poly_ids
     global preparerLoRa
+    print(poly)
     # first case: self-produced poly
     structure = {
         "w_id": polygon_id,
@@ -215,8 +245,6 @@ def loadNeeded(needed):
 
 
 def update_other_polys(structure, groups):
-    print(structure)
-    print(groups)
     same_group = False
     for e in groups:
         if e in GROUP:
@@ -242,4 +270,5 @@ def handle_message(msg):
 if __name__ == '__main__':
     scheduler.init_app(app)
     scheduler.start()
-    app.run(host="localhost", port=5010, debug=False, use_reloader=False, threaded=True)
+    app.run(host="localhost", port=5005, debug=True, use_reloader=False, threaded=True)
+

@@ -2,7 +2,7 @@
   <div class="container">
     <div class="row">
       <div class="col-sm-10">
-        <h1>Multi-Vehicle-ASC-Machine</h1>
+        <h1>Multi-Vehicle-ASC-Machine-2</h1>
         <hr><br><br>
         <alert :message=message v-if="showMessage"></alert>
         <b-button v-if="disable" v-b-modal.machine-modal>Add Machine</b-button>
@@ -173,7 +173,7 @@ export default {
   },
   methods: {
     pollpolys() {
-      const path = 'http://localhost:5010/mv/poly';
+      const path = 'http://localhost:5005/mv/poly';
       const payload = {
         counters: this.counter,
       };
@@ -191,10 +191,10 @@ export default {
         });
     },
     poll_data() {
-
+      this.polling_polys = setInterval(() => { this.pollpolys(); }, 15005);
     },
     getMachines() {
-      const path = 'http://localhost:5010/mv';
+      const path = 'http://localhost:5005/mv';
       axios.get(path)
         .then((res) => {
           this.machines = res.data.machines;
@@ -205,7 +205,7 @@ export default {
         });
     },
     addMachine(payload) {
-      const path = 'http://localhost:5010/mv';
+      const path = 'http://localhost:5005/mv';
       axios.post(path, payload)
         .then(() => {
           this.getMachines();
@@ -249,7 +249,7 @@ export default {
     },
   },
   created() {
-    this.getMachines();
+    this.poll_data();
     this.polling_polys = setInterval(() => { this.pollpolys(); }, 15005);
   },
   beforeDestroy() {

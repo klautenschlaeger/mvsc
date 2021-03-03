@@ -32,7 +32,6 @@ class PrepareLoraMessage(object):
             if 3 in self.groups:
                 id = id + 300
             element = 0
-            buffer = []
             for p in self.share_poly:
                 poly_int = self.share_poly.pop(0)
                 p_id = self.share_poly_ids.pop(0)
