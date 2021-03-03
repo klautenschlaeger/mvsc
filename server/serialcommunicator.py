@@ -107,7 +107,7 @@ class SerialCommunicator(object):
         buf = struct.pack('iii', 100, 0, int(len(poly)))
         buf2 = struct.pack('%sd' % len(poly_double), *poly_double)
         total = buf + buf2
-        uri = "ws://localhost:8765"
+        uri = "ws://localhost:8770"
         async with websockets.connect(uri) as websocket:
             await websocket.send(total)
 

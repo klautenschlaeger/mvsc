@@ -8,7 +8,7 @@ import struct
 import requests
 import websockets
 
-url = 'http://localhost:5005/update/own'
+url = 'http://localhost:5010/update/own'
 waiting = []
 
 async def hello(websocket, path):
@@ -53,7 +53,7 @@ def byte_to_area(count_poly, buffer):
         field = {'area': coords2}
         x = requests.post(url, json=field)
 
-start_server = websockets.serve(hello, "localhost", 8765)
+start_server = websockets.serve(hello, "localhost", 8770)
 
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()

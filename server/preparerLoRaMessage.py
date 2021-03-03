@@ -1,6 +1,6 @@
 import math
 import struct
-import datetime
+
 
 class PrepareLoraMessage(object):
     def __init__(self, driverId, groups):
@@ -25,7 +25,6 @@ class PrepareLoraMessage(object):
         id = self.driverId
         buffer = []
         if self.driverId > 0:
-            print("sharing")
             if 1 in self.groups:
                 id = id + 10000
             if 2 in self.groups:
@@ -38,23 +37,15 @@ class PrepareLoraMessage(object):
                 p_id = self.share_poly_ids.pop(0)
                 element = element + 1
                 loads = math.ceil(len(poly_int) / 60)
-                # print("loads: " + str(loads))
-                # print("poly_int_len: " + str(poly_int.__len__()))
                 poly_id = p_id * 100 + loads * 10
                 for i in range(1, loads + 1, 1):
                     list_lora_int = [id, poly_id + i]
                     print("sharing: {0}".format(poly_id +i))
                     n = (i - 1) * 60
                     m = i * 60
-                    # print(m)
-                    # print(n)
                     if poly_int.__len__() - 1 < m:
                         m = poly_int.__len__()
-                    # print(m)
                     list_lora_int = list_lora_int + poly_int[n:m]
                     buf = struct.pack('%si' % len(list_lora_int), *list_lora_int)
                     buffer.append(buf)
         return buffer
-                    # print(list_lora_int)
-                    # print("lora_int_len: " + str(list_lora_int.__len__()))
-                    # print(buf)

@@ -132,12 +132,12 @@ export default {
       center: [51.7283462477326, 12.116302453006],
       polygon1: {
         latlngs: [],
-        color: 'yellow',
+        color: 'blue',
         group: 1,
       },
       polygon2: {
         latlngs: [],
-        color: 'red',
+        color: 'blue',
         group: 2,
       },
       polygon3: {
@@ -250,6 +250,7 @@ export default {
   },
   created() {
     this.poll_data();
+    this.polling_polys = setInterval(() => { this.pollpolys(); }, 15005);
   },
   beforeDestroy() {
     clearInterval(this.polling_polys);
