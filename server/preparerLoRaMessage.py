@@ -1,6 +1,6 @@
 import math
 import struct
-
+import datetime
 
 class PrepareLoraMessage(object):
     def __init__(self, driverId, groups):
@@ -23,6 +23,7 @@ class PrepareLoraMessage(object):
 
     def prepareBinaryMessages(self):
         id = self.driverId
+        buffer = []
         if self.driverId > 0:
             print("sharing")
             if 1 in self.groups:
@@ -32,7 +33,6 @@ class PrepareLoraMessage(object):
             if 3 in self.groups:
                 id = id + 300
             element = 0
-            buffer = []
             for p in self.share_poly:
                 poly_int = self.share_poly.pop(0)
                 p_id = self.share_poly_ids.pop(0)
@@ -54,7 +54,7 @@ class PrepareLoraMessage(object):
                     list_lora_int = list_lora_int + poly_int[n:m]
                     buf = struct.pack('%si' % len(list_lora_int), *list_lora_int)
                     buffer.append(buf)
-            return buffer
+        return buffer
                     # print(list_lora_int)
                     # print("lora_int_len: " + str(list_lora_int.__len__()))
                     # print(buf)

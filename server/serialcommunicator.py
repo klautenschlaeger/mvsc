@@ -104,7 +104,7 @@ class SerialCommunicator(object):
             for coordinate in poly:
                 poly_double.append(coordinate[0])
                 poly_double.append(coordinate[1])
-        buf = struct.pack('iii', 100, 0, int(len(poly_double)))
+        buf = struct.pack('iii', 100, 0, int(len(poly)))
         buf2 = struct.pack('%sd' % len(poly_double), *poly_double)
         total = buf + buf2
         uri = "ws://localhost:8765"
