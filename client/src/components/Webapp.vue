@@ -2,11 +2,11 @@
   <div class="container">
     <div class="row">
       <div class="col-sm-10">
-        <h1>Multi-Vehicle-ASC-Machine</h1>
+        <h1>Multi-Vehicle-ASC-Machine-2</h1>
         <hr><br><br>
         <alert :message=message v-if="showMessage"></alert>
-        <b-button  v-b-modal.machine-modal>Add Machine</b-button>
-        <b-button id="show-btn" @click="$bvModal.show('bv-modal-example')">Open all Machines</b-button>
+        <b-button v-if="disable" v-b-modal.machine-modal>Add Machine</b-button>
+        <b-button v-if="!disable" id="show-btn" @click="$bvModal.show('bv-modal')">Open all Machines</b-button>
 
 
         <br><br>
@@ -21,7 +21,7 @@
         <l-polygon :lat-lngs="polygon_own.latlngs" :color="polygon_own.color"></l-polygon>
       </l-map>
     </div>
-    <b-modal id="bv-modal-example" size="xl" hide-footer>
+    <b-modal @show="getMachines" id="bv-modal" size="xl" hide-footer>
       <template #modal-title>
         All Machines
       </template>
@@ -54,21 +54,10 @@
               <span v-if="machine.three">X</span>
               <span v-else></span>
             </td>
-            <td>
-              <div class="btn-group" role="group">
-                <button
-                        type="button"
-                        class="btn btn-warning btn-sm"
-                        v-b-modal.machine-update-modal
-                        @click="editBook(book)">
-                    Update
-                </button>
-              </div>
-            </td>
           </tr>
         </tbody>
       </table>
-      <b-button class="mt-3" block @click="$bvModal.hide('bv-modal-example')">Close Me</b-button>
+      <b-button class="mt-3" block @click="$bvModal.hide('bv-modal')">Close Me</b-button>
     </b-modal>
     <b-modal ref="addMachineModal"
             id="machine-modal"
@@ -137,6 +126,7 @@ import Alert from './Alert.vue';
 export default {
   data() {
     return {
+      disable: true,
       url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
       zoom: 15,
       center: [51.7283462477326, 12.116302453006],
@@ -161,7 +151,6 @@ export default {
         group: 0,
       },
       polling_polys: null,
-      polling_machines: null,
       machines: [],
       addMachineForm: {
         drivername: '',
@@ -203,7 +192,6 @@ export default {
     },
     poll_data() {
       this.polling_polys = setInterval(() => { this.pollpolys(); }, 15005);
-      this.polling_machines = setInterval(() => { this.getMachines(); }, 30000);
     },
     getMachines() {
       const path = 'http://localhost:5005/mv';
@@ -215,9 +203,6 @@ export default {
           // eslint-disable-next-line
           console.error(error);
         });
-      if (this.machines.length !== 10) {
-        clearInterval(this.polling_machines);
-      }
     },
     addMachine(payload) {
       const path = 'http://localhost:5005/mv';
@@ -226,6 +211,7 @@ export default {
           this.getMachines();
           this.message = 'Machine added!';
           this.showMessage = true;
+          this.disable = false;
         })
         .catch((error) => {
           // eslint-disable-next-line
@@ -263,15 +249,10 @@ export default {
     },
   },
   created() {
-    this.getMachines();
     this.poll_data();
   },
   beforeDestroy() {
     clearInterval(this.polling_polys);
-    if (this.polling_machines !== null) {
-      clearInterval(this.polling_machines);
-    }
   },
-
 };
 </script>
