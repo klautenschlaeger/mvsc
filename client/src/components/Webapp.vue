@@ -15,6 +15,7 @@
     <div class="map" id="map" ref="mapElement">
       <l-map style="height: 350px" :zoom="zoom" :center="center">
         <l-tile-layer :url="url"></l-tile-layer>
+        <l-control-attribution position="bottomright" prefix='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>"'></l-control-attribution>
         <l-polygon :lat-lngs="polygon1.latlngs" :color="polygon1.color"></l-polygon>
         <l-polygon :lat-lngs="polygon2.latlngs" :color="polygon2.color"></l-polygon>
         <l-polygon :lat-lngs="polygon3.latlngs" :color="polygon3.color"></l-polygon>
@@ -120,7 +121,7 @@
 </style>
 <script>
 import axios from 'axios';
-import { LMap, LTileLayer, LPolygon } from 'vue2-leaflet';
+import { LMap, LTileLayer, LPolygon, LControlAttribution } from 'vue2-leaflet';
 import Alert from './Alert.vue';
 
 export default {
@@ -170,6 +171,7 @@ export default {
     LMap,
     LTileLayer,
     LPolygon,
+    LControlAttribution,
   },
   methods: {
     pollpolys() {
