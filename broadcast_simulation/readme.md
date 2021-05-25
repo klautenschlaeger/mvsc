@@ -1,1 +1,3 @@
-init simulation
+#### Simulation broadcast-based System
+
+This software simulates the LoRa-based Multi-Vehicle-Section-Control system. The suggested solution consists of a LoRa P2P network, where polygons are shared via broadcasts. To prevent interference every LoRa node gets assigned a time slot for sending. Every node tries to send new polygons, which are stored in a queue, and then continues trying to send other polygons again. Every polygon is picked at random from a list of polygons which were received from a simulation of a real field near Fraßdorf in Germany with LC:Navguide from [Lacos Computerservice GmbH](https://www.lacos.de/)
