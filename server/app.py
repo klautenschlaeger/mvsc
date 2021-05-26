@@ -1,31 +1,22 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+import distanceCalculator
 
 POLYS = [[],
          [],
          []]
 
-
-GROUP = [[], [2], [1]]
+GROUP = [[], [], [1, 2]]
 
 MACHINES = [
     {
         'driverid': 1,
-        'drivername': 'Iselt',
-        'forename': 'Marvin',
+        'drivername': 'test',
+        'forename': 'test',
         'machineid': 'John Deere 5430i_12',
         'one': False,
         'two': False,
         'three': True
-    },
-    {
-        'driverid': 2,
-        'drivername': 'Schröders',
-        'forename': 'Nils',
-        'machineid': 'Horsch Pronto SW_145',
-        'one': False,
-        'two': True,
-        'three': False
     }
 ]
 
@@ -38,36 +29,15 @@ app.config.from_object(__name__)
 
 # enable CORS
 CORS(app, resources={r'/*': {'origins': '*'}})
+disCalci = distanceCalculator.DistanceCalculator()
 
 global driver_id
-driver_id = 3
-
-
-# sanity check route
-@app.route('/ping', methods=['GET'])
-def ping_pong():
-    return jsonify('pong!')
+driver_id = 2
 
 
 @app.route('/mv', methods=['GET', 'POST'])
 def all_machines():
-    response_object = {'status': 'success'}
-    if request.method == 'POST':
-        global driver_id
-        post_data = request.get_json()
-        MACHINES.append({
-            'id': driver_id,
-            'drivername': post_data.get('drivername'),
-            'forename': post_data.get('forename'),
-            'machineid': post_data.get('machineid'),
-            'one': post_data.get('one'),
-            'two': post_data.get('two'),
-            'three': post_data.get('three')
-        })
-        driver_id = driver_id + 1
-        response_object['message'] = 'Machine added!'
-    else:
-        response_object['machines'] = MACHINES
+    response_object = {'status': 'success', 'machines': MACHINES}
     return jsonify(response_object)
 
 
@@ -77,7 +47,7 @@ def new_machines():
     global driver_id
     post_data = request.get_json()
     MACHINES.append({
-        'id': driver_id,
+        'driverid': driver_id,
         'drivername': post_data.get('drivername'),
         'forename': post_data.get('forename'),
         'machineid': post_data.get('machineid'),
@@ -87,7 +57,7 @@ def new_machines():
     })
     response_object['driverid'] = driver_id
     MACHINES2 = [{
-        'id': driver_id,
+        'driverid': driver_id,
         'drivername': post_data.get('drivername'),
         'forename': post_data.get('forename'),
         'machineid': post_data.get('machineid'),
@@ -112,7 +82,7 @@ def new_machines():
             if machine.get('two'):
                 if machine.get("driverid") not in ids:
                     MACHINES2.append(machine)
-                    ids.append(machine.get('id'))
+                    ids.append(machine.get('driverid'))
         if post_data.get('three'):
             if machine.get('three'):
                 if machine.get("driverid") not in ids:
@@ -150,22 +120,50 @@ def update_polys():
     driver = int(post_data.get('driverid'))
     poly_id = post_data.get('workareaid')
     polygon = post_data.get('area')
+    centre = disCalci.calcCenter(poly=polygon)
     structure = {
         "w_id": poly_id,
         "d_id": driver,
-        "w": polygon
+        "w": polygon,
+        "centre": centre
     }
     needed = []
+    disCalci.setCentre(polygon)
     for i in range(0, 3, 1):
         if driver in GROUP[i]:
             if POLYS[i].__len__() > 0:
-                latest_poly = POLYS[i].pop()
-                needed.append(latest_poly)
-                POLYS[i].append(latest_poly)
+                for poly in POLYS[i]:
+                    if poly.get("d_id") != driver:
+                        distance = disCalci.calcDistance(centre_end=poly.get("centre"))
+                        if distance < 150:
+                            print(distance)
+                            code = poly.get("w_id") * 100 + poly.get("d_id")
+                            if code not in needed:
+                                needed.append(code)
             POLYS[i].append(structure)
     response_object['needed'] = needed
-    print(POLYS)
-    print(needed)
+    return jsonify(response_object)
+
+
+@app.route('/missing', methods=['POST'])
+def send_polys():
+    response_object = {'status': 'success'}
+    post_data = request.get_json()
+    needed = post_data.get('needed')
+    needed_polys = []
+    for code in needed:
+        driver = code % 100
+        p_id = int((code - driver)/100)
+        found = False
+        i = 0
+        while not found and i < 3:
+            for structure in POLYS[i]:
+                if structure.get("d_id") == driver and structure.get("w_id") == p_id:
+                    needed_polys.append(structure)
+                    found = True
+                    break
+            i = i + 1
+    response_object["needed"] = needed_polys
     return jsonify(response_object)
 
 

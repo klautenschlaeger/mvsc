@@ -5,8 +5,7 @@
         <h1>Multi-Vehicle-ASC-Controller</h1>
         <hr><br><br>
         <alert :message=message v-if="showMessage"></alert>
-        <b-button  v-b-modal.machine-modal>Add Machine</b-button>
-        <b-button id="show-btn" @click="$bvModal.show('bv-modal-example')">Open all Machines</b-button>
+        <b-button id="show-btn" @click="$bvModal.show('bv-modal')">Open all Machines</b-button>
 
 
         <br><br>
@@ -15,12 +14,13 @@
     <div class="map" id="map" ref="mapElement">
       <l-map style="height: 350px" :zoom="zoom" :center="center">
         <l-tile-layer :url="url"></l-tile-layer>
+        <l-control-attribution position="bottomright" prefix='Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>"'></l-control-attribution>
         <l-polygon :lat-lngs="polygon1.latlngs" :color="polygon1.color"></l-polygon>
         <l-polygon :lat-lngs="polygon2.latlngs" :color="polygon2.color"></l-polygon>
         <l-polygon :lat-lngs="polygon3.latlngs" :color="polygon3.color"></l-polygon>
       </l-map>
     </div>
-    <b-modal id="bv-modal-example" size="xl" hide-footer>
+    <b-modal @show="getMachines" id="bv-modal" size="xl" hide-footer>
       <template #modal-title>
         All Machines
       </template>
@@ -53,72 +53,10 @@
               <span v-if="machine.three">X</span>
               <span v-else></span>
             </td>
-            <td>
-              <div class="btn-group" role="group">
-                <button
-                        type="button"
-                        class="btn btn-warning btn-sm"
-                        v-b-modal.machine-update-modal
-                        @click="editBook(book)">
-                    Update
-                </button>
-              </div>
-            </td>
           </tr>
         </tbody>
       </table>
-      <b-button class="mt-3" block @click="$bvModal.hide('bv-modal-example')">Close Me</b-button>
-    </b-modal>
-    <b-modal ref="addMachineModal"
-            id="machine-modal"
-            title="Add a new machine"
-            hide-footer>
-      <b-form @submit="onSubmit" class="w-100">
-      <b-form-group id="form-drivername-group"
-                    label="Name:"
-                    label-for="form-drivername-input">
-          <b-form-input id="form-drivername-input"
-                        type="text"
-                        v-model="addMachineForm.drivername"
-                        required
-                        placeholder="Enter Name">
-          </b-form-input>
-        </b-form-group>
-        <b-form-group id="form-forename-group"
-                      label="Vorname:"
-                      label-for="form-forename-input">
-            <b-form-input id="form-forename-input"
-                          type="text"
-                          v-model="addMachineForm.forename"
-                          required
-                          placeholder="Enter Vorname">
-            </b-form-input>
-          </b-form-group>
-        <b-form-group id="form-machineid-group"
-                      label="Maschine:"
-                      label-for="form-machineid-input">
-            <b-form-input id="form-machineid-input"
-                          type="text"
-                          v-model="addMachineForm.machineid"
-                          required
-                          placeholder="Enter Maschine">
-            </b-form-input>
-          </b-form-group>
-        <b-form-group id="form-read-group">
-          <b-form-checkbox-group v-model="addMachineForm.one" id="form-checks-one">
-            <b-form-checkbox value="true">Gruppe1</b-form-checkbox>
-          </b-form-checkbox-group>
-          <b-form-checkbox-group v-model="addMachineForm.two" id="form-checks-two">
-            <b-form-checkbox value="true">Gruppe 2</b-form-checkbox>
-          </b-form-checkbox-group>
-          <b-form-checkbox-group v-model="addMachineForm.three" id="form-checks-three">
-            <b-form-checkbox value="true">Gruppe 3</b-form-checkbox>
-          </b-form-checkbox-group>
-        </b-form-group>
-        <b-button-group>
-          <b-button type="submit" variant="primary">Submit</b-button>
-        </b-button-group>
-      </b-form>
+      <b-button class="mt-3" block @click="$bvModal.hide('bv-modal')">Close Me</b-button>
     </b-modal>
   </div>
 </template>
@@ -130,7 +68,7 @@
 </style>
 <script>
 import axios from 'axios';
-import { LMap, LTileLayer, LPolygon } from 'vue2-leaflet';
+import { LMap, LTileLayer, LPolygon, LControlAttribution, } from 'vue2-leaflet';
 import Alert from './Alert.vue';
 
 export default {
@@ -157,14 +95,6 @@ export default {
       polling_polys: null,
       polling_machines: null,
       machines: [],
-      addMachineForm: {
-        drivername: '',
-        forename: '',
-        machineid: '',
-        one: [],
-        two: [],
-        three: [],
-      },
       counter: [0, 0, 0],
       message: '',
       showMessage: false,
@@ -175,6 +105,7 @@ export default {
     LMap,
     LTileLayer,
     LPolygon,
+    LControlAttribution,
   },
   methods: {
     pollpolys() {
@@ -195,7 +126,7 @@ export default {
         });
     },
     poll_data() {
-      this.polling_polys = setInterval(() => { this.pollpolys(); }, 15001);
+      this.polling_polys = setInterval(() => { this.pollpolys(); }, 15000);
       this.polling_machines = setInterval(() => { this.getMachines(); }, 30000);
     },
     getMachines() {
@@ -211,20 +142,6 @@ export default {
       if (this.machines.length !== 10) {
         clearInterval(this.polling_machines);
       }
-    },
-    addMachine(payload) {
-      const path = 'http://localhost:5001/mv';
-      axios.post(path, payload)
-        .then(() => {
-          this.getMachines();
-          this.message = 'Machine added!';
-          this.showMessage = true;
-        })
-        .catch((error) => {
-          // eslint-disable-next-line
-          console.log(error);
-          this.getMachines();
-        });
     },
     initForm() {
       this.addMachineForm.drivername = '';
