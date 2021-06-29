@@ -1,0 +1,165 @@
+
+
+31.1.2021
+Strommast
+exp_rec_9_27_0.csv
+start: (52.39886, 11.697506111111112)
+end: (52.3994525, 11.696693611111112)
+distance: 81.73 m
+Start_time: 09:28:40
+1:  100 %
+2:  100 %
+3:  100 %
+4:  99 %
+Errors: [[38, 0]]
+5:  100 %
+average:  99.8 %
+average rssi:  (-63.711, -63.7558, -63.6663)
+
+Torfgrube
+exp_rec_10_10_26.csv
+start: (52.40355599777778, 11.700204485277776)
+end: (52.40313527777778, 11.687535833333333)
+distance: 165.986 m
+Start_time: 10:11:00
+1:  100 %
+2:  100 %
+3:  100 %
+4:  99 %
+Errors: [[9, 0]]
+5:  99 %
+Errors: [[68, 0]]
+average:  99.6 %
+average rssi:  (-92.4632, -92.5316, -92.3948)
+
+
+exp_rec_14_15_40.csv
+start: (52.4127314, 11.6916861)
+end: (52.41463472222222, 11.691683333333334)
+distance: 211.877
+Start_time: 14:16:45
+1:  99 %
+Errors: [[40, 0]]
+2:  98 %
+Errors: [[32, 0], [88, 0]]
+3:  100 %
+4:  100 %
+5:  100 %
+average:  99.4 %
+average rssi:  (-83.8903, -83.9698, -83.8108)
+
+
+exp_rec_14_39_4.csv
+start: (52.4127314, 11.6916861)
+end: (52.41542638888889, 11.691164722222222)
+distance: 301.675
+Start_time: 14:39:57
+1:  100 %
+2:  100 %
+3:  100 %
+4:  99 %
+Errors: [[48, 0]]
+5:  100 %
+average:  99.8 %
+average rssi:  (-95.067, -95.1346, -94.9994)
+
+
+exp_rec_15_5_29.csv
+start: (52.4127314, 11.6916861)
+end: (52.41652444444444, 11.689820555555556)
+distance: 437.234 m
+Start_time: 15:06:39
+1:  100 %
+2:  100 %
+3:  100 %
+4:  99 %
+Errors: [[54, 0]]
+5:  100 %
+average:  99.8 %
+average rssi:  (-108.9315, -108.9732, -108.8899)
+
+
+2.2.2021 offenes Feld
+exp_rec_2_2_9_31_17.csv
+start: (52.40355599777778, 11.700204485277776)
+end: (52.40313527777778, 11.687535833333333)
+distance: 758.986 m
+Altitude_difference: 0 m
+Coding_rate: 5
+Start_time: 09:32:28
+6:  100 %
+average:  -91.54 dbm
+
+Coding_rate: 6
+Start_time: 09:37:28
+7:  100 %
+average:  -91.73 dbm
+
+Coding_rate: 7
+Start_time: 09:42:28
+8:  100 %
+average:  -91.97 dbm
+
+Coding_rate: 8
+Start_time: 09:47:28
+9:  100 %
+average:  -92.29 dbm
+
+average: -91,88 dBm
+average_total: (-91.9333, -91.9836, -91.8831)
+
+
+
+exp_rec_2_2_10_40_8.csv
+start: (52.40419289472222, 11.705116806388888)
+end: (52.403641388888886, 11.677660277777777)
+distance: 1644.421 m
+Altitude_difference: 13 m
+Coding_rate: 5
+Start_time: 10:43:15
+6:  100 %
+average:  -99.28 dbm
+
+Coding_rate: 6
+Start_time: 10:48:15
+7:  100 %
+average:  -99.39 dbm
+
+Coding_rate: 7
+Start_time: 10:51:35
+8:  99 %
+average:  -99.05 dbm
+
+Coding_rate: 8
+Start_time: 10:56:35
+9:  100 %
+average:  -99.29 dbm
+
+average: -99,25 dbm
+average_total: (-99.3088, -99.3394, -99.2781)
+
+
+exp_rec_2_2_11_11_55.csv
+start: (52.40527044111111, 11.70762921611111)
+end: (52.403486388888886, 11.673448055555555)
+distance: 2056.832 m
+Altitude_difference: 12 m
+Coding_rate: 5
+Start_time: 11:12:15
+6:  99 %
+average:  -110.9 dbm
+Coding_rate: 6
+Start_time: 11:17:15
+7:  98 %
+average:  -110.9 dbm
+Coding_rate: 7
+Start_time: 11:22:15
+8:  100 %
+average:  -110.35 dbm
+Coding_rate: 8
+Start_time: 11:26:15
+9:  100 %
+average:  -110.66 dbm
+
+average: -110,70 dbm
+average_total: (-110.6225, -110.6645, -110.5806)
